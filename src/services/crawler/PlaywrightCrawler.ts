@@ -1,4 +1,3 @@
-import { chromium } from "playwright-core";
 import { UrlNormalizer } from "./UrlNormalizer";
 import { ContentCleaner } from "./ContentCleaner";
 import { logger } from "@/lib/logger";
@@ -12,6 +11,8 @@ export class PlaywrightCrawler {
   ): Promise<{ html: string; links: string[] } | null> {
     let browser;
     try {
+      // @ts-expect-error - playwright-core not installed on Vercel
+      const { chromium } = await import("playwright-core");
       browser = await chromium.launch({
         headless: true,
         args: ["--no-sandbox", "--disable-setuid-sandbox"],
