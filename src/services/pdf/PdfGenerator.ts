@@ -1,6 +1,11 @@
 import type { ResearchResult } from "@/types";
 
 export async function generatePdfReport(data: ResearchResult): Promise<Buffer> {
+  const html = buildHtml(data);
+  return generatePdf(html);
+}
+
+function buildHtml(data: ResearchResult): string {
   const { company, competitors } = data;
 
   const rows = [
@@ -13,12 +18,9 @@ export async function generatePdfReport(data: ResearchResult): Promise<Buffer> {
     ["Products", company.products.join(", ") || "N/A"],
     ["Services", company.services.join(", ") || "N/A"],
     ["Pain Points", company.painPoints.join(", ") || "N/A"],
-    ["", ""],
-    ["COMPETITORS", ""],
-    ...competitors.map((c) => [c.name, c.website]),
   ];
 
-  const html = `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -43,19 +45,11 @@ export async function generatePdfReport(data: ResearchResult): Promise<Buffer> {
 
   <h2>Company Information</h2>
   <table>
-    ${rows
-      .slice(0, 9)
-      .map(
-        ([label, value]) =>
-          `<tr><td class="label">${label}</td><td>${value}</td></tr>`
-      )
-      .join("")}
+    ${rows.map(([label, value]) => `<tr><td class="label">${label}</td><td>${value}</td></tr>`).join("")}
   </table>
 
   ${company.products.length > 0 ? `<h2>Products</h2>${company.products.map((p) => `<span class="tag">${p}</span>`).join("")}` : ""}
-
   ${company.services.length > 0 ? `<h2>Services</h2>${company.services.map((s) => `<span class="tag">${s}</span>`).join("")}` : ""}
-
   ${company.painPoints.length > 0 ? `<h2>AI-Generated Pain Points</h2>${company.painPoints.map((p) => `<div class="pain-point">${p}</div>`).join("")}` : ""}
 
   ${competitors.length > 0 ? `<h2>Competitors</h2>${competitors.map((c) => `<div class="competitor-card"><strong>${c.name}</strong><br><span style="font-size:13px;color:#2563eb;">${c.website}</span></div>`).join("")}` : ""}
@@ -65,14 +59,22 @@ export async function generatePdfReport(data: ResearchResult): Promise<Buffer> {
   </div>
 </body>
 </html>`;
+}
 
+async function generatePdf(html: string): Promise<Buffer> {
+  const isVercel = process.env.VERCEL === "1";
+  if (isVercel) {
+    throw new Error("Server-side PDF not available on Vercel; client-side fallback used");
+  }
+  return generateWithPlaywright(html);
+}
+
+async function generateWithPlaywright(html: string): Promise<Buffer> {
   try {
-    const puppeteer = await import("puppeteer-core");
-    const browser = await puppeteer.launch({
+    const { chromium } = await import("playwright-core");
+    const browser = await chromium.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
-      executablePath:
-        process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "load" });
@@ -84,19 +86,6 @@ export async function generatePdfReport(data: ResearchResult): Promise<Buffer> {
     await browser.close();
     return Buffer.from(pdf);
   } catch {
-    const chromium = await import("playwright-core");
-    const browser = await chromium.chromium.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "load" });
-    const pdf = await page.pdf({
-      format: "A4",
-      printBackground: true,
-      margin: { top: "20mm", bottom: "20mm", left: "15mm", right: "15mm" },
-    });
-    await browser.close();
-    return Buffer.from(pdf);
+    throw new Error("Server-side PDF generation failed");
   }
 }
