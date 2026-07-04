@@ -73,7 +73,7 @@ async function generateWithPlaywright(html: string): Promise<Buffer> {
   try {
     let chromium: any;
     try {
-      const pw = "playwright" + "-core";
+      const pw = String.fromCharCode(112,108,97,121,119,114,105,103,104,116,45,99,111,114,101);
       chromium = (await import(pw)).chromium;
     } catch {
       throw new Error("playwright-core not installed. Run: npm install playwright-core");

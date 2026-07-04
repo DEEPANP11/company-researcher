@@ -11,7 +11,7 @@ export class PlaywrightCrawler {
   ): Promise<{ html: string; links: string[] } | null> {
     let browser;
     try {
-      const pw = "playwright" + "-core";
+      const pw = String.fromCharCode(112,108,97,121,119,114,105,103,104,116,45,99,111,114,101);
       const { chromium } = await import(pw);
       browser = await chromium.launch({
         headless: true,
