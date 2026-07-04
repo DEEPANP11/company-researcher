@@ -1,3 +1,4 @@
+import FormData from "form-data";
 import { logger } from "@/lib/logger";
 
 export async function sendToDiscord(
@@ -7,16 +8,14 @@ export async function sendToDiscord(
   pdfBuffer?: Buffer
 ): Promise<boolean> {
   try {
-    const formData = new FormData();
-    formData.append(
-      "payload_json",
-      JSON.stringify({ content })
-    );
+    const form = new FormData();
+    form.append("payload_json", JSON.stringify({ content }));
 
-    if (pdfBuffer) {
-      const uint8 = new Uint8Array(pdfBuffer);
-      const blob = new Blob([uint8], { type: "application/pdf" });
-      formData.append("file", blob, "company-report.pdf");
+    if (pdfBuffer && pdfBuffer.length > 0) {
+      form.append("file", pdfBuffer, {
+        filename: "company-report.pdf",
+        contentType: "application/pdf",
+      });
     }
 
     const response = await fetch(
@@ -25,8 +24,9 @@ export async function sendToDiscord(
         method: "POST",
         headers: {
           Authorization: `Bot ${botToken}`,
+          ...form.getHeaders(),
         },
-        body: formData,
+        body: form as unknown as BodyInit,
       }
     );
 
