@@ -30,18 +30,18 @@ export class OpenRouterClient {
     responseFormat?: { type: "json_object" | "text" }
   ): Promise<string> {
     const start = Date.now();
-    try {
-      const body: Record<string, unknown> = {
-        model,
-        messages,
-        max_tokens: 1500,
-        temperature: 0.3,
-      };
+    const body: Record<string, unknown> = {
+      model,
+      messages,
+      max_tokens: 700,
+      temperature: 0.3,
+    };
 
-      if (responseFormat) {
-        body.response_format = responseFormat;
-      }
+    if (responseFormat) {
+      body.response_format = responseFormat;
+    }
 
+    const doFetch = async (): Promise<{ content: string; responseModel: string }> => {
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -59,21 +59,42 @@ export class OpenRouterClient {
       }
 
       const data = (await response.json()) as OpenRouterResponse;
-      const content = data.choices[0]?.message?.content || "";
+      return {
+        content: data.choices[0]?.message?.content || "",
+        responseModel: data.model,
+      };
+    };
+
+    try {
+      const { content, responseModel } = await doFetch();
 
       logger.info(
         {
           model,
           took: Date.now() - start,
           tokens: content.length,
-          responseModel: data.model,
+          responseModel,
         },
         "OpenRouter chat completed"
       );
 
       return content;
     } catch (err) {
-      logger.error({ model, err }, "OpenRouter chat failed");
+      if (
+        responseFormat?.type === "json_object" &&
+        err instanceof Error &&
+        err.message.includes("json_object") &&
+        err.message.includes("400")
+      ) {
+        delete body.response_format;
+        try {
+          const retry = await doFetch();
+          logger.warn({ model }, "Retried without json_object format");
+          return retry.content;
+        } catch {
+          throw err;
+        }
+      }
       throw err;
     }
   }
