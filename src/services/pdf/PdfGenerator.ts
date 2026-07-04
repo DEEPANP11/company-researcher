@@ -73,8 +73,8 @@ async function generateWithPlaywright(html: string): Promise<Buffer> {
   try {
     let chromium: any;
     try {
-      // @ts-expect-error - playwright-core not installed on Vercel
-      chromium = (await import("playwright-core")).chromium;
+      const pw = "playwright" + "-core";
+      chromium = (await import(pw)).chromium;
     } catch {
       throw new Error("playwright-core not installed. Run: npm install playwright-core");
     }
