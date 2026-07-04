@@ -1,0 +1,1 @@
+export { sendToDiscord } from "./DiscordWebhook";

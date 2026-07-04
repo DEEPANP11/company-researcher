@@ -1,0 +1,1 @@
+export { generatePdfReport } from "./PdfGenerator";
