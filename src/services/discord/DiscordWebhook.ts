@@ -26,13 +26,13 @@ export async function sendToDiscord(
           Authorization: `Bot ${botToken}`,
           ...form.getHeaders(),
         },
-        body: form as unknown as BodyInit,
+        body: form.getBuffer() as unknown as BodyInit,
       }
     );
 
     if (!response.ok) {
       const text = await response.text();
-      logger.error({ status: response.status, text }, "Discord send failed");
+      logger.error({ status: response.status, text, content }, "Discord send failed");
       return false;
     }
 
