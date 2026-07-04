@@ -7,7 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function isUrl(text: string): boolean {
   try {
-    new URL(text.startsWith("http") ? text : `https://${text}`);
+    const url = new URL(text.startsWith("http") ? text : `https://${text}`);
+    if (!url.hostname.includes(".")) return false;
     return true;
   } catch {
     return false;

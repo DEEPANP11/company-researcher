@@ -71,7 +71,12 @@ async function generatePdf(html: string): Promise<Buffer> {
 
 async function generateWithPlaywright(html: string): Promise<Buffer> {
   try {
-    const { chromium } = await import("playwright-core");
+    let chromium: any;
+    try {
+      chromium = (await import("playwright-core")).chromium;
+    } catch {
+      throw new Error("playwright-core not installed. Run: npm install playwright-core");
+    }
     const browser = await chromium.launch({
       headless: true,
       args: ["--no-sandbox", "--disable-setuid-sandbox"],
