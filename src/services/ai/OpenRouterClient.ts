@@ -34,7 +34,7 @@ export class OpenRouterClient {
       const body: Record<string, unknown> = {
         model,
         messages,
-        max_tokens: 2048,
+        max_tokens: 1500,
         temperature: 0.3,
       };
 
