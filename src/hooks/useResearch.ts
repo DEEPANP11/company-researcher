@@ -26,7 +26,13 @@ export function useResearch() {
         });
 
         if (!response.ok) {
-          throw new Error("Research request failed");
+          let detail = "";
+          try {
+            const err = await response.json();
+            detail = err.error || "";
+          } catch {}
+          const msg = detail ? `Research request failed: ${detail}` : `Research request failed (${response.status})`;
+          throw new Error(msg);
         }
 
         const reader = response.body?.getReader();

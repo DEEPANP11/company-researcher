@@ -18,6 +18,15 @@ export class ResearchService {
   private crawler = new CrawlerManager();
 
   private getCrawlBudget(): CrawlBudget {
+    const isVercel = process.env.VERCEL === "1";
+    if (isVercel) {
+      return {
+        maxPages: parseInt(process.env.MAX_PAGES || "2", 10),
+        maxDepth: parseInt(process.env.MAX_DEPTH || "1", 10),
+        maxChars: parseInt(process.env.MAX_CHARS || "30000", 10),
+        timeoutMs: parseInt(process.env.CRAWL_TIMEOUT_MS || "5000", 10),
+      };
+    }
     return {
       maxPages: parseInt(process.env.MAX_PAGES || "15", 10),
       maxDepth: parseInt(process.env.MAX_DEPTH || "2", 10),

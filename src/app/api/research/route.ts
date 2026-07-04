@@ -99,9 +99,17 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
     logger.error({ err }, "Research API error");
+    if (message.includes("OPENROUTER_API_KEY") || message.includes("SERPER_API_KEY")) {
+      return new Response(
+        JSON.stringify({ error: "API key not configured. Set OPENROUTER_API_KEY and SERPER_API_KEY in Vercel project settings." }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
     return new Response(
-      JSON.stringify({ error: "Internal server error" }),
+      JSON.stringify({ error: message }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
